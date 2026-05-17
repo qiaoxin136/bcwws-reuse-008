@@ -818,7 +818,33 @@ function App() {
                     }}
                   />
                 </Source>
-                
+
+                <Source id="station" type="geojson" data="/station.geojson">
+                  <Layer
+                    id="station-points"
+                    type="circle"
+                    paint={{
+                      'circle-radius': 1,
+                      'circle-color': '#e85d04',
+                    }}
+                  />
+                  <Layer
+                    id="station-labels"
+                    type="symbol"
+                    layout={{
+                      'text-field': ['get', 'Text'],
+                      'text-size': 10,
+                      'text-offset': [0, 1],
+                      'text-anchor': 'top',
+                    }}
+                    paint={{
+                      'text-color': '#000000',
+                      'text-halo-color': '#ffffff',
+                      'text-halo-width': 1,
+                    }}
+                  />
+                </Source>
+
                 <Marker latitude={Number(lat)} longitude={Number(lng)} />
                 {popupInfo && (
                   <>
