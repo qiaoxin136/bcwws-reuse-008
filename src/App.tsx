@@ -135,17 +135,6 @@ export type CustomEvent = {
 // "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 
-function PhotoImg({ path, height }: { path: string; height: number }) {
-  return (
-    <StorageImage
-      path={path}
-      alt="photo"
-      height={height}
-      style={{ marginLeft: '10px', marginBottom: '8px' }}
-      onGetUrlError={(err: Error) => console.error(`StorageImage failed for "${path}":`, err)}
-    />
-  );
-}
 
 interface PopupInfo {
   longitude: number;
@@ -185,8 +174,6 @@ function App() {
   }), [location]);
 
   const [jointMap, setJointMap] = useState<Record<string, string | null>>({});
-  type PhotoRecord = { id: string; date: string | null; description: string | null; photos: (string | null)[] | null };
-  const [photosData, setPhotosData] = useState<PhotoRecord[]>([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   //const [report, setReport] = useState("");
@@ -205,7 +192,6 @@ function App() {
   const [basemap, setBasemap] = useState("mapbox://styles/mapbox/streets-v12");
   const [pdfMode, setPdfMode] = useState(false);
   const [calResult, setCalResult] = useState<number | null>(null);
-  const [unitCosts, setUnitCosts] = useState<{ diameter: number; price: number }[]>([]);
 
   //const [clickInfo, setClickInfo] = useState<DataT>();
   //const [showPopup, setShowPopup] = useState<boolean>(true);
