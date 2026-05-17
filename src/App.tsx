@@ -191,18 +191,19 @@ function App() {
   const [time, setTime] = useState("");
   //const [report, setReport] = useState("");
   const [track, setTrack] = useState<number>(0);
-  const [type, setType] = useState<string>("water");
+  const [type, setType] = useState<string>("reuse");
   const [diameter, setDiameter] = useState<number>(0);
   const [length, setLength] = useState<number>(0);
   const [userName, setUserName] = useState<string>();
   const [description, setDescription] = useState<string>("");
-  const [joint, setJoint] = useState<boolean>(true);
+  const [joint, setJoint] = useState<string>("joint");
   const [lat, setLat] = useState(0);
   const [lng, setLng] = useState(0);
   const [placePhotos, setPlacePhotos] = useState<File[]>([]);
 
   const [tab, setTab] = useState("1");
   const [basemap, setBasemap] = useState("mapbox://styles/mapbox/streets-v12");
+  const [pdfMode, setPdfMode] = useState(false);
   const [calResult, setCalResult] = useState<number | null>(null);
   const [unitCosts, setUnitCosts] = useState<{ diameter: number; price: number }[]>([]);
 
@@ -216,13 +217,14 @@ function App() {
   const [editTrack, setEditTrack] = useState<string>('');
   const [editDescription, setEditDescription] = useState<string>('');
   const [editDiameter, setEditDiameter] = useState<string>('');
-  const [editType, setEditType] = useState<string>('water');
-  const [editJoint, setEditJoint] = useState<boolean>(true);
+  const [editType, setEditType] = useState<string>('reuse');
+  const [editJoint, setEditJoint] = useState<string>("joint");
   const [editDate, setEditDate] = useState<string>('');
 
 
 
   const options: SelectOption[] = [
+    { value: 'reuse', label: 'Reuse' },
     { value: 'water', label: 'Water' },
     { value: 'wastewater', label: 'Wastewater' },
     { value: 'stormwater', label: 'Stormwater' },
@@ -584,6 +586,14 @@ function App() {
     const feature = e.features?.[0];
 
     //console.log("clicked feature =", feature);
+    if (feature?.layer?.id === 'lines' && pdfMode) {
+      const dn = feature.properties?.DN;
+      if (dn != null) {
+        window.open(`https://bcwws-reuse.s3.us-east-1.amazonaws.com/FM${dn}.pdf`, '_blank');
+      }
+      return;
+    }
+
     if (!feature || feature.geometry.type !== 'Point') {
       //console.log(e);
       setLat(e.lngLat.lat);
@@ -603,11 +613,11 @@ function App() {
       setEditTrack(props.track != null ? String(props.track) : '');
       setEditDescription(props.description ?? '');
       setEditDiameter(props.diameter != null ? String(props.diameter) : '');
-      setEditType(props.type ?? 'water');
-      setEditJoint(match?.joint !== false);
+      setEditType(props.type ?? 'reuse');
+      setEditJoint(typeof match?.joint === 'string' ? match.joint : 'joint');
       setEditDate(match?.date ?? props.date ?? '');
     };
-  }, [location]);
+  }, [location, pdfMode]);
 
   const onMouseEnter = useCallback(() => setCursor('pointer'), []);
   const onMouseLeave = useCallback(() => setCursor('grab'), []);
@@ -697,13 +707,21 @@ function App() {
           onChange={handleDescription}
           width="800px"
         />
-        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+        <select
+          value={joint}
+          onChange={e => setJoint(e.target.value)}
+        >
+          <option value="joint">Joint</option>
+          <option value="bend">Bend</option>
+          <option value="valve">Valve</option>
+        </select>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
           <input
             type="checkbox"
-            checked={joint}
-            onChange={e => setJoint(e.target.checked)}
+            checked={pdfMode}
+            onChange={e => setPdfMode(e.target.checked)}
           />
-          Joint
+          {pdfMode ? 'PDF Mode' : 'Marker Mode'}
         </label>
         {/* <Input type="number" value={Number(lat.toFixed(10))} />
         <Input type="number" value={Number(lng.toFixed(10))} /> */}
@@ -733,7 +751,7 @@ function App() {
                   height: "1000px",
                   borderColor: "#000000",
                 }}
-                interactiveLayerIds={['water-points']}
+                interactiveLayerIds={['water-points', 'lines']}
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
@@ -757,10 +775,11 @@ function App() {
                       'circle-color': [
                         'match',
                         ['get', 'type'],
-                        'water', '#2b6cb0', // Diameter of exactly 10 is red
-                        "wastewater", '#2ea160', // Diameter of exactly 20 is green
+                        'reuse', '#b12bbd',
+                        'water', '#2b6cb0',
+                        "wastewater", '#2ea160',
                         "stormwater", '#eca4a4',
-                        "pavement", '#a0a0a0',  '#2b6cb0'       // Fallback color for any other value
+                        "pavement", '#a0a0a0',  '#2b6cb0'
                       ]/* '#2b6cb0' */,
                       'circle-stroke-color': '#ffffff',
                       'circle-stroke-width': 2,
@@ -779,7 +798,7 @@ function App() {
                       'line-width': 1,
                       // Use a get expression (https://docs.mapbox.comhttps://docs.mapbox.com/style-spec/reference/expressions/#get)
                       // to set the line-color to a feature property value.
-                      'line-color': "#b12bbd",
+                      'line-color': "#c7a0ca",
                       'line-dasharray': [4, 2]
                     }}
                   />
@@ -839,6 +858,7 @@ function App() {
                                   onChange={e => setEditType(e.target.value)}
                                   style={{ fontSize: '11px', padding: '2px 4px', width: '100%' }}
                                 >
+                                  <option value="reuse">reuse</option>
                                   <option value="water">water</option>
                                   <option value="wastewater">wastewater</option>
                                   <option value="stormwater">stormwater</option>
@@ -885,16 +905,15 @@ function App() {
                             <tr>
                               <td>Joint</td>
                               <td>
-                                <input
-                                  aria-label="Joint"
-                                  type="checkbox"
-                                  checked={editJoint}
-                                  onChange={e => setEditJoint(e.target.checked)}
-                                  style={{ cursor: 'pointer', width: '14px', height: '14px' }}
-                                />
-                                <span style={{ fontSize: '11px', marginLeft: '6px' }}>
-                                  {editJoint ? 'true' : 'false'}
-                                </span>
+                                <select
+                                  value={editJoint}
+                                  onChange={e => setEditJoint(e.target.value)}
+                                  style={{ fontSize: '11px', padding: '2px 4px' }}
+                                >
+                                  <option value="joint">Joint</option>
+                                  <option value="bend">Bend</option>
+                                  <option value="valve">Valve</option>
+                                </select>
                               </td>
                             </tr>
                           </tbody>
@@ -988,6 +1007,7 @@ function App() {
                 }}>
                   <div style={{ fontWeight: 700, marginBottom: '8px', fontSize: '12px' }}>Legend</div>
                   {([
+                    { label: 'Reuse',       color: '#b12bbd' },
                     { label: 'Water',       color: '#2b6cb0' },
                     { label: 'Wastewater',  color: '#2ea160' },
                     { label: 'Stormwater',  color: '#eca4a4' },
