@@ -944,9 +944,6 @@ function App() {
         <Button onClick={handleTrackCal} backgroundColor={"lightgreen"} color={"darkgreen"}>
           Track Cal
         </Button>
-        <Button onClick={handleExportPolygon} backgroundColor={"lightyellow"} color={"darkorange"}>
-          Export Polygon
-        </Button>
         {calResult !== null && (
           <span style={{ alignSelf: "center", fontWeight: "bold" }}>
             Distance: {calResult.toFixed(1)} ft
