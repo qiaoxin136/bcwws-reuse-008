@@ -121,22 +121,7 @@ const theme: Theme = {
   },
 };
 
-// type DataT = {
-//   type: "Feature";
-//   id: number;
-//   geometry: {
-//     type: "Point";
-//     coordinates: [number, number, number];
-//   };
-//   properties: {
-//     track: number;
-//     type: string;
-//     status: string;
-//     date: string;
-//     time: string;
-//     id: string;
-//   };
-// };
+
 
 type SelectOption = {
   value: string;
