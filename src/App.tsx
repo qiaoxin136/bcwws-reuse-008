@@ -234,11 +234,6 @@ function App() {
   const [trackInfoList, setTrackInfoList] = useState<TrackInfoItem[]>([]);
   const [valveList, setValveList] = useState<ValveItem[]>([]);
   const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
-  const [editingValveId, setEditingValveId] = useState<string | null>(null);
-  const [editValveFields, setEditValveFields] = useState({
-    valve: "", number: "" as number | "", unitprice: "" as number | "",
-    ton: "" as number | "", value: "" as number | "",
-  });
   const [editTrackFields, setEditTrackFields] = useState({
     track: "" as number | "", geometry: "line",
     ft2: "" as number | "", yd2: "" as number | "",
@@ -700,18 +695,6 @@ function App() {
       cost: editTrackFields.cost,
     });
     setEditingTrackId(null);
-  }
-
-  function saveValveInfo(id: string) {
-    client.models.Valve.update({
-      id,
-      valve: editValveFields.valve || null,
-      number: editValveFields.number !== "" ? Number(editValveFields.number) : null,
-      unitprice: editValveFields.unitprice !== "" ? Number(editValveFields.unitprice) : null,
-      ton: editValveFields.ton !== "" ? Number(editValveFields.ton) : null,
-      value: editValveFields.value !== "" ? Number(editValveFields.value) : null,
-    });
-    setEditingValveId(null);
   }
 
   function handleCal() {
