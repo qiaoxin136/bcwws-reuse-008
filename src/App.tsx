@@ -298,9 +298,6 @@ function App() {
     }
   }
 
-  const handleDiameter = (e: ChangeEvent<HTMLInputElement>) => {
-    setDiameter(parseInt(e.target.value));
-  }
 
 
 
