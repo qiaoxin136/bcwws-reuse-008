@@ -194,7 +194,7 @@ function App() {
   const [basemap, setBasemap] = useState("mapbox://styles/mapbox/streets-v12");
   const [pdfMode, setPdfMode] = useState(false);
   const [calResult, setCalResult] = useState<number | null>(null);
-  const [computeStatus, setComputeStatus] = useState<string>("");
+  const [computeStatus, setComputeStatus] = useState<string[]>([]);
   const [showAdminTabs, setShowAdminTabs] = useState<boolean>(false);
 
   //const [clickInfo, setClickInfo] = useState<DataT>();
@@ -728,12 +728,12 @@ function App() {
 
   async function handleCompletePolygon() {
     try {
-      flushSync(() => setComputeStatus("Complete Polygon: processing..."));
+      flushSync(() => setComputeStatus(["Complete Polygon: processing..."]));
       const LAT_FT = 364000;
       const features = [];
 
       const polygonTracks = trackInfoList.filter(t => t.geometry === 'polygon');
-      flushSync(() => setComputeStatus(`Complete Polygon: found ${polygonTracks.length} polygon track(s)...`));
+      flushSync(() => setComputeStatus(prev => [...prev, `Complete Polygon: found ${polygonTracks.length} polygon track(s)...`]));
 
       for (const trackRec of polygonTracks) {
         const pts = location
@@ -787,11 +787,11 @@ function App() {
       }
 
       if (features.length === 0) {
-        setComputeStatus("Complete Polygon: no polygon tracks with 3+ points found.");
+        setComputeStatus(prev => [...prev, "Complete Polygon: no polygon tracks with 3+ points found."]);
         return;
       }
 
-      flushSync(() => setComputeStatus(`Complete Polygon: uploading ${features.length} polygon(s)...`));
+      flushSync(() => setComputeStatus(prev => [...prev, `Complete Polygon: uploading ${features.length} polygon(s)...`]));
       const geojson = { type: 'FeatureCollection' as const, features };
       const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
       await uploadData({
@@ -799,10 +799,10 @@ function App() {
         data: blob,
         options: { contentType: 'application/json' },
       }).result;
-      setComputeStatus(`✓ Saved ${features.length} polygon(s) to Amplify Storage as geojson/polygon.geojson.`);
+      setComputeStatus(prev => [...prev, `✓ Saved ${features.length} polygon(s) to Amplify Storage as geojson/polygon.geojson.`]);
     } catch (err) {
       console.error('handleCompletePolygon error:', err);
-      setComputeStatus(`✗ Complete Polygon failed: ${String(err)}`);
+      setComputeStatus(prev => [...prev, `✗ Complete Polygon failed: ${String(err)}`]);
     }
   }
 
@@ -811,7 +811,7 @@ function App() {
     const sorted = [...trackInfoList].sort((a, b) => (a.track ?? 0) - (b.track ?? 0));
 
     // Pass 0: populate unitprice and geometry from trackData.ts by matching Location type → TRACK_DATA
-    flushSync(() => setComputeStatus("Pass 0: Populating unit price, geometry, unit from trackData..."));
+    flushSync(() => setComputeStatus(["Pass 0: Populating unit price, geometry, unit from trackData..."]));
     for (const trackRec of sorted) {
       const pts = location.filter(l => l.track === trackRec.track);
       const firstType = pts.find(p => p.type)?.type;
@@ -833,7 +833,7 @@ function App() {
     const freshSorted = [...(freshTracks ?? [])].sort((a, b) => (a.track ?? 0) - (b.track ?? 0));
 
     // Pass 1: compute quantity (and ft2/yd2 for polygons) using fresh geometry
-    flushSync(() => setComputeStatus("Pass 1: Computing quantity, area, last date..."));
+    flushSync(() => setComputeStatus(prev => [...prev, "Pass 1: Computing quantity, area, last date..."]));
     for (const trackRec of freshSorted) {
       if (!trackRec.cost) continue;
       const pts = location.filter(l => l.track === trackRec.track);
@@ -885,7 +885,7 @@ function App() {
     }
 
     // Pass 2: compute value = unitprice * quantity
-    flushSync(() => setComputeStatus("Pass 2: Computing Track value = unit price × quantity..."));
+    flushSync(() => setComputeStatus(prev => [...prev, "Pass 2: Computing Track value = unit price × quantity..."]));
     for (const trackRec of freshSorted) {
       if (!trackRec.cost) continue;
       const { data: fresh } = await client.models.Track.get({ id: trackRec.id });
@@ -896,7 +896,7 @@ function App() {
     }
 
     // Pass 3: count Location records where joint <> "joint", grouped by joint value → save to Valve table (last step)
-    flushSync(() => setComputeStatus("Pass 3: Counting joints, updating Valve table..."));
+    flushSync(() => setComputeStatus(prev => [...prev, "Pass 3: Counting joints, updating Valve table..."]));
     const nonJoint = location.filter(l => l.joint !== 'joint' && l.joint != null && l.joint !== '');
     const typeCounts: Record<string, number> = {};
     for (const loc of nonJoint) {
@@ -914,7 +914,7 @@ function App() {
     }
 
     // Pass 4: compute Valve value = number * unitprice * ton
-    flushSync(() => setComputeStatus("Pass 4: Computing Valve value = number × unit price × ton..."));
+    flushSync(() => setComputeStatus(prev => [...prev, "Pass 4: Computing Valve value = number × unit price × ton..."]));
     const { data: freshValves } = await client.models.Valve.list();
     for (const v of freshValves ?? []) {
       if (v.number != null && v.unitprice != null && v.ton != null) {
@@ -923,7 +923,7 @@ function App() {
       }
     }
 
-    setComputeStatus("✓ Compute complete.");
+    setComputeStatus(prev => [...prev, "✓ Compute complete."]);
     setTab("4");
   }
 
@@ -1001,10 +1001,14 @@ function App() {
         <Button onClick={handleCompletePolygon} backgroundColor={"steelblue"} color={"white"}>
           Complete Polygon
         </Button>
-        {computeStatus && (
-          <span style={{ alignSelf: "center", fontWeight: "bold", color: computeStatus.startsWith("✓") ? "darkgreen" : "darkorange" }}>
-            {computeStatus}
-          </span>
+        {computeStatus.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", fontWeight: "bold" }}>
+            {computeStatus.map((msg, i) => (
+              <span key={i} style={{ color: msg.startsWith("✓") ? "darkgreen" : msg.startsWith("✗") ? "red" : "darkorange" }}>
+                {msg}
+              </span>
+            ))}
+          </div>
         )}
         {calResult !== null && (
           <span style={{ alignSelf: "center", fontWeight: "bold" }}>
