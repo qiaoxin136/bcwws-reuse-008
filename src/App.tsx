@@ -941,6 +941,44 @@ function App() {
         options: { contentType: 'application/json' },
       }).result;
       setComputeStatus(prev => [...prev, `✓ Saved ${pointFeatures.length} point(s) to Amplify Storage as geojson/point.geojson.`]);
+
+      // Export locations on line-geometry tracks as line.geojson (one LineString per track)
+      flushSync(() => setComputeStatus(prev => [...prev, "Exporting line tracks to line.geojson..."]));
+      const lineTracks = trackInfoList.filter(t => t.geometry === 'line');
+      const lineFeatures = [];
+      for (const trackRec of lineTracks) {
+        const pts = location
+          .filter(l => l.track === trackRec.track && l.lat != null && l.lng != null)
+          .sort((a, b) => `${a.date ?? ''}T${a.time ?? ''}`.localeCompare(`${b.date ?? ''}T${b.time ?? ''}`));
+        if (pts.length < 2) continue;
+        lineFeatures.push({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: pts.map(l => [l.lng!, l.lat!]),
+          },
+          properties: {
+            track:     trackRec.track,
+            geometry:  trackRec.geometry,
+            type:      trackRec.type,
+            unitprice: trackRec.unitprice,
+            quan:      trackRec.quan,
+            value:     trackRec.value,
+            numpoint:  trackRec.numpoint,
+            unit:      trackRec.unit,
+            lastdate:  trackRec.lastdate,
+            color:     trackRec.color,
+            cost:      trackRec.cost,
+          },
+        });
+      }
+      const lineGeojson = { type: 'FeatureCollection' as const, features: lineFeatures };
+      await uploadData({
+        path: 'geojson/line.geojson',
+        data: new Blob([JSON.stringify(lineGeojson, null, 2)], { type: 'application/json' }),
+        options: { contentType: 'application/json' },
+      }).result;
+      setComputeStatus(prev => [...prev, `✓ Saved ${lineFeatures.length} line(s) to Amplify Storage as geojson/line.geojson.`]);
       setTimeout(() => setComputeStatus([]), 2000);
     } catch (err) {
       console.error('handleCompletePolygon error:', err);
