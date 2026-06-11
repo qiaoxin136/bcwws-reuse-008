@@ -906,6 +906,7 @@ function App() {
         options: { contentType: 'application/json' },
       }).result;
       setComputeStatus(prev => [...prev, `✓ Saved ${features.length} polygon(s) to Amplify Storage as geojson/polygon.geojson.`]);
+      setTimeout(() => setComputeStatus([]), 2000);
     } catch (err) {
       console.error('handleCompletePolygon error:', err);
       setComputeStatus(prev => [...prev, `✗ Complete Polygon failed: ${String(err)}`]);
@@ -1035,6 +1036,7 @@ function App() {
 
     setComputeStatus(prev => [...prev, "✓ Compute complete."]);
     setTab("1");
+    setTimeout(() => setComputeStatus([]), 2000);
   }
 
   const onClick = useCallback((e: MapMouseEvent) => {
