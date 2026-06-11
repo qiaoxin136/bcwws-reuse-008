@@ -23,7 +23,12 @@
       "Bash(python3 lambda/trip_path/lambda_function.py)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\([r['type'] for r in d]\\)\")",
       "Bash(python3 -)",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('vector_layers'\\), indent=2\\)\\); print\\('modified:', d.get\\('modified'\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('vector_layers'\\), indent=2\\)\\); print\\('modified:', d.get\\('modified'\\)\\)\")",
+      "Bash(cat amplify/storage/resource.ts)",
+      "Bash(aws s3 *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Add point.geojson export for point-geometry tracks on Complete Polygon *)",
+      "Bash(git push *)"
     ]
   }
 }

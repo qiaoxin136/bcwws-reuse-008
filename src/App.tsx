@@ -207,7 +207,7 @@ function App() {
 
   //const { data } = useGeoJSON();
   const [popupInfo, setPopupInfo] = useState<PopupInfo | null>(null);
-  const [hoverInfo, setHoverInfo] = useState<{ longitude: number; latitude: number; date: string; type: string } | null>(null);
+  const [hoverInfo, setHoverInfo] = useState<{ longitude: number; latitude: number; track: string; date: string; type: string } | null>(null);
   const [cursor, setCursor] = useState<string>('grab');
   const [editTrack, setEditTrack] = useState<string>('');
   const [editDescription, setEditDescription] = useState<string>('');
@@ -906,6 +906,41 @@ function App() {
         options: { contentType: 'application/json' },
       }).result;
       setComputeStatus(prev => [...prev, `✓ Saved ${features.length} polygon(s) to Amplify Storage as geojson/polygon.geojson.`]);
+
+      // Export locations on point-geometry tracks as point.geojson
+      flushSync(() => setComputeStatus(prev => [...prev, "Exporting point tracks to point.geojson..."]));
+      const pointTracks = trackInfoList.filter(t => t.geometry === 'point');
+      const pointFeatures = pointTracks.flatMap(trackRec =>
+        location
+          .filter(l => l.track === trackRec.track && l.lat != null && l.lng != null)
+          .map(l => ({
+            type: 'Feature' as const,
+            geometry: { type: 'Point' as const, coordinates: [l.lng!, l.lat!] },
+            properties: {
+              id:        l.id,
+              date:      l.date,
+              time:      l.time,
+              track:     trackRec.track,
+              geometry:  trackRec.geometry,
+              type:      trackRec.type,
+              unitprice: trackRec.unitprice,
+              quan:      trackRec.quan,
+              value:     trackRec.value,
+              numpoint:  trackRec.numpoint,
+              unit:      trackRec.unit,
+              lastdate:  trackRec.lastdate,
+              color:     trackRec.color,
+              cost:      trackRec.cost,
+            },
+          }))
+      );
+      const pointGeojson = { type: 'FeatureCollection' as const, features: pointFeatures };
+      await uploadData({
+        path: 'geojson/point.geojson',
+        data: new Blob([JSON.stringify(pointGeojson, null, 2)], { type: 'application/json' }),
+        options: { contentType: 'application/json' },
+      }).result;
+      setComputeStatus(prev => [...prev, `✓ Saved ${pointFeatures.length} point(s) to Amplify Storage as geojson/point.geojson.`]);
       setTimeout(() => setComputeStatus([]), 2000);
     } catch (err) {
       console.error('handleCompletePolygon error:', err);
@@ -1095,6 +1130,7 @@ function App() {
       setHoverInfo({
         longitude: event.lngLat.lng,
         latitude: event.lngLat.lat,
+        track: props.track != null ? String(props.track) : '',
         date: props.date ?? '',
         type: props.type ?? '',
       });
@@ -1373,6 +1409,7 @@ function App() {
                     closeOnClick={false}
                   >
                     <div style={{ fontSize: '11px', lineHeight: '1.4' }}>
+                      <div><b>Track:</b> {hoverInfo.track}</div>
                       <div><b>Date:</b> {hoverInfo.date}</div>
                       <div><b>Type:</b> {hoverInfo.type}</div>
                     </div>
