@@ -17,7 +17,7 @@ const schema = a.schema({
       time: a.time(),
       track: a.integer().required(),
       type: a.string(),
-      diameter: a.float().required(),
+      diameter: a.float(),
       length: a.float().required(),
       lat: a.float().required(),
       lng: a.float().required(),
