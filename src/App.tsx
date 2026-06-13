@@ -799,7 +799,6 @@ function App() {
 
   async function handleCompletePolygon() {
     try {
-      flushSync(() => setComputeStatus(["Complete Polygon: processing..."]));
       const LAT_FT = 364000;
       const features: {
         type: 'Feature';
@@ -808,7 +807,6 @@ function App() {
       }[] = [];
 
       const polygonTracks = trackInfoList.filter(t => t.geometry === 'polygon');
-      flushSync(() => setComputeStatus(prev => [...prev, `Complete Polygon: found ${polygonTracks.length} polygon track(s)...`]));
 
       for (const trackRec of polygonTracks) {
         const pts = location
@@ -862,7 +860,6 @@ function App() {
       }
 
       if (features.length === 0) {
-        setComputeStatus(prev => [...prev, "Complete Polygon: no polygon tracks with 3+ points found."]);
         return;
       }
 
@@ -896,7 +893,6 @@ function App() {
         },
       });
 
-      flushSync(() => setComputeStatus(prev => [...prev, `Complete Polygon: uploading ${features.length} polygon(s)...`]));
       const geojson = { type: 'FeatureCollection' as const, features };
       const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
       await uploadData({
@@ -904,7 +900,6 @@ function App() {
         data: blob,
         options: { contentType: 'application/json' },
       }).result;
-      flushSync(() => setComputeStatus(prev => [...prev, `✓ Saved ${features.length} polygon(s) to Amplify Storage as geojson/polygon.geojson.`]));
 
       // Export locations on line-geometry tracks as line.geojson (one LineString per track)
       const lineTracks = trackInfoList.filter(t => t.geometry === 'line');
@@ -942,13 +937,10 @@ function App() {
         options: { contentType: 'application/json' },
       }).result;
 
-      // Last pass: export point-geometry track locations to point.geojson (same as Export Point button)
+      // Last pass: export point-geometry track locations to point.geojson
       await exportPointGeojson();
-
-      setTimeout(() => setComputeStatus([]), 2000);
     } catch (err) {
       console.error('handleCompletePolygon error:', err);
-      setComputeStatus(prev => [...prev, `✗ Complete Polygon failed: ${String(err)}`]);
     }
   }
 
@@ -983,18 +975,6 @@ function App() {
       options: { contentType: 'application/json' },
     }).result;
     return pointFeatures.length;
-  }
-
-  async function handleExportPoint() {
-    try {
-      flushSync(() => setComputeStatus(["Export Point: exporting point tracks to point.geojson..."]));
-      const count = await exportPointGeojson();
-      setComputeStatus(prev => [...prev, `✓ Saved ${count} point(s) to Amplify Storage as geojson/point.geojson.`]);
-      setTimeout(() => setComputeStatus([]), 2000);
-    } catch (err) {
-      console.error('handleExportPoint error:', err);
-      setComputeStatus(prev => [...prev, `✗ Export Point failed: ${String(err)}`]);
-    }
   }
 
   async function handleCompute() {
@@ -1236,9 +1216,6 @@ function App() {
         </Button>
         <Button onClick={handleCompletePolygon} backgroundColor={"steelblue"} color={"white"}>
           Complete Polygon
-        </Button>
-        <Button onClick={handleExportPoint} backgroundColor={"#6b46c1"} color={"white"}>
-          Export Point
         </Button>
         {computeStatus.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", fontWeight: "bold" }}>
