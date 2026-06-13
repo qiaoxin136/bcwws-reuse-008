@@ -37,7 +37,8 @@
       "Bash(git commit -m 'Default type dropdown to first valid option instead of stale '\\\\''reuse'\\\\'' *)",
       "Bash(git commit -m 'Remove point/line export status messages from Complete Polygon *)",
       "Bash(git commit -m 'Add Export Point button; export point-track locations to point.geojson *)",
-      "Bash(git commit -m 'Add color field to Export Point geojson output *)"
+      "Bash(git commit -m 'Add color field to Export Point geojson output *)",
+      "Bash(git commit -m 'Match Export Point locations to Track by track number to export all shared points *)"
     ]
   }
 }

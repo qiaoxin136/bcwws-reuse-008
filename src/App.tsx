@@ -984,14 +984,15 @@ function App() {
   async function handleExportPoint() {
     try {
       flushSync(() => setComputeStatus(["Export Point: exporting point tracks to point.geojson..."]));
-      // For each Location, look up the linked Track by matching type; keep only point-geometry tracks.
-      const trackByType: Record<string, typeof trackInfoList[number]> = {};
+      // For each Location, look up the linked Track by track number; keep only point-geometry
+      // tracks. Every Location sharing a track number is exported as its own feature.
+      const trackByNumber: Record<number, typeof trackInfoList[number]> = {};
       for (const t of trackInfoList) {
-        if (t.type) trackByType[t.type] = t;
+        if (t.track != null) trackByNumber[t.track] = t;
       }
       const pointFeatures = location
-        .filter(l => l.lat != null && l.lng != null && l.type != null)
-        .map(l => ({ l, track: trackByType[l.type!] }))
+        .filter(l => l.lat != null && l.lng != null && l.track != null)
+        .map(l => ({ l, track: trackByNumber[l.track!] }))
         .filter(({ track }) => track?.geometry === 'point')
         .map(({ l, track }) => ({
           type: 'Feature' as const,
